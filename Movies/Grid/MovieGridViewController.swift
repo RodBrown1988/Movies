@@ -56,7 +56,7 @@ final class MovieGridViewController: UICollectionViewController {
             group.interItemSpacing = .fixed(separation)
 
             let section = NSCollectionLayoutSection(group: group)
-            section.interGroupSpacing = min(10.0, separation / 4.0 * 3.0)
+            section.interGroupSpacing = separation
             section.contentInsets = NSDirectionalEdgeInsets(top: 16, leading: separation, bottom: 16, trailing: 16)
             return section
         }
