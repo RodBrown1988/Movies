@@ -74,7 +74,7 @@ nonisolated final class Repository: NSObject, Sendable {
         importMovies(at: movieURLs)
     }
 
-    @MainActor func url(for asset: RepositoryAsset) -> URL? {
+    func url(for asset: RepositoryAsset) -> URL? {
         guard let assetPath = asset.assetPath else { return nil }
 
         let url = storeURL.appendingPathComponent(assetPath, isDirectory: false)
@@ -129,13 +129,11 @@ nonisolated final class Repository: NSObject, Sendable {
         }
 
         for case let asset as RepositoryAsset in savedContext.deletedObjects {
-            Task { @MainActor in
-                if let url = self.url(for: asset) {
-                    _ = try?  FileManager.default.removeItem(at: url)
-                }
-                if let entity = asset as? FICEntity {
-                    FICImageCache.shared.deleteImages(for: entity)
-                }
+            if let url = self.url(for: asset) {
+                _ = try?  FileManager.default.removeItem(at: url)
+            }
+            if let entity = asset as? FICEntity {
+                FICImageCache.shared.deleteImages(for: entity)
             }
         }
     }
