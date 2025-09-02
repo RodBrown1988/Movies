@@ -30,15 +30,36 @@ final class MovieGridViewController: UICollectionViewController {
     init(context: NSManagedObjectContext) {
         self.context = context
 
-        let itemSize = NSCollectionLayoutSize(widthDimension: .absolute(176), heightDimension: .absolute(264))
-        let item = NSCollectionLayoutItem(layoutSize: itemSize)
-        let group = NSCollectionLayoutGroup.horizontal(layoutSize: NSCollectionLayoutSize(widthDimension: .fractionalWidth(1), heightDimension: .estimated(264)), repeatingSubitem: item, count: 2)
-        group.interItemSpacing = .fixed(16)
-        let section = NSCollectionLayoutSection(group: group)
-        section.interGroupSpacing = 16
-        section.contentInsetsReference = .safeArea
-        section.contentInsets = NSDirectionalEdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16)
-        let layout = UICollectionViewCompositionalLayout(section: section)
+        let layout = UICollectionViewCompositionalLayout { _, environment in
+            let itemSize = MovieCollectionViewCell.cellSize(forDisplaySize: environment.container.contentSize)
+            let contentWidth = environment.container.effectiveContentSize.width
+
+            // Get max count of cells possible to fit in this width with padding
+            let preferredCellCount = floor((contentWidth - 20.0) / (itemSize.width + 20.0))
+            let maxCellCount = max(preferredCellCount, 1.0)
+
+            // Get a floored separation. Floor it so we don't end up with bad maths if frameworks round values and we end up with too much separation to fit
+            let cellOnlyWidth = ceil(maxCellCount * itemSize.width)
+            let nonCellWidth = floor(contentWidth - cellOnlyWidth)
+            let separation = floor(nonCellWidth / (maxCellCount + 1))
+
+            let item = NSCollectionLayoutItem(layoutSize: .init(
+                widthDimension: .absolute(itemSize.width),
+                heightDimension: .absolute(itemSize.height)
+            ))
+
+            let group = NSCollectionLayoutGroup.horizontal(
+                layoutSize: .init(widthDimension: .fractionalWidth(1), heightDimension: .absolute(itemSize.height)),
+                repeatingSubitem: item,
+                count: Int(preferredCellCount)
+            )
+            group.interItemSpacing = .fixed(separation)
+
+            let section = NSCollectionLayoutSection(group: group)
+            section.interGroupSpacing = min(10.0, separation / 4.0 * 3.0)
+            section.contentInsets = NSDirectionalEdgeInsets(top: 16, leading: separation, bottom: 16, trailing: 16)
+            return section
+        }
 
         let movieRequest = Movie.fetchRequest()
         movieRequest.sortDescriptors = [NSSortDescriptor(key: "name", ascending: true)]
@@ -79,8 +100,6 @@ final class MovieGridViewController: UICollectionViewController {
                 if FICImageCache.shared.retrieveImage(
                     for: movie, withFormatName: FICImageFormat.MovieThumbnailFormatName,
                     completionBlock: { entity, uuid, image in
-                        print("return")
-
                         guard let image else { return }
 
                         self?.cache.setObject(image, forKey: movie.objectID)
@@ -216,3 +235,4 @@ extension MovieGridViewController: NSFetchedResultsControllerDelegate {
     }
 
 }
+
