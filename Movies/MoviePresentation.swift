@@ -49,7 +49,7 @@ private struct _MoviePlayerHost: UIViewControllerRepresentable {
 
 }
 
-private final class MoviePlayerHostController: UIViewController, @MainActor AVPlayerViewControllerDelegate {
+private final class MoviePlayerHostController: UIViewController, AVPlayerViewControllerDelegate {
 
     enum PictureInPictureState {
         case active
